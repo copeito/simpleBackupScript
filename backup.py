@@ -1,4 +1,5 @@
-"""Configura un objeto del tipo back
+"""Configura un objeto del tipo backup.
+
 Este objeto del tipo backup que sera gestionado por
 backupManager.
 
