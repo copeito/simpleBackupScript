@@ -1,8 +1,9 @@
-"""Configura un objeto del tipo back
-Este objeto del tipo backup que sera gestionado por
-backupManager.
+"""Configura un objeto del tipo backup.
+
+Este objeto sera gestionado por backupManager.
 
 Probado en Python 3.5:
+
 
 """
 
