@@ -1,51 +1,116 @@
-"""Configura un objeto del tipo backup.
+"""Configure a Backup class object.
 
-Este objeto sera gestionado por backupManager.
+This object will be managed by backupManager.
 
-Probado en Python 3.5:
+Tested in Python 3.5.
 
 
 """
 
 from pathlib import Path
+import sys
+import tarfile
+import os
+import time
 
 
 class Backup(object):
-    """Configura un backup."""
+    """Configure a backup."""
 
     def __init__(self, args=None):
-        """Inicializa un backup."""
-        self.configs = dict()
+        """Initialize a backup."""
+        self.params = dict()
         if args is not None:
             self.set(args)
 
     def set(self, args):
-        """Configura como se ejecutara el backup."""
+        """Manage how will be exetuted the backup."""
+        paths = ['sourcePath', 'destinationPath']
+        integers = ['maxNumber', 'minDaysBackup']
+
         for arg in args:
             argType = type(args[arg])
 
-            if arg == 'sourcePath' or arg == 'destinationPath':
+            if paths.count(arg):
                 if isinstance(args[arg], Path):
-                    config = args[arg]
+                    param = args[arg]
                 elif (argType == str):
-                    config = Path(args[arg])
+                    param = Path(args[arg])
                 else:
-                    # Lanzar excepcion
-                    pass
-            elif arg == 'maxNumber' or arg == 'minDaysBackup':
-                if argType != int:
-                    # Lanzar excepcion
-                    pass
+                    sys.exit(
+                        "Error: sourcePath and destinationPath must be "
+                        "strings or objects from Path class"
+                    )
+                if not param.exists():
+                    sys.exit(
+                        'Error: path '+str(param)+' dont exist'
+                    )
 
-            self.configs[arg] = config
+            elif integers.count(arg):
+                if argType != int:
+                    sys.exit(
+                        'Error: '+arg+' must be an integer'
+                    )
+                else:
+                    param = args[arg]
+
+            self.params[arg] = param
+
+    def checkParams(self):
+        """Check if params are ok."""
+        for mandatoryPath in ['sourcePath', 'destinationPath']:
+            try:
+                self.params[mandatoryPath]
+            except:
+                sys.exit(
+                    'Error: '+mandatoryPath+' must be defined'
+                )
+        if not self.params['destinationPath'].is_dir():
+                sys.exit(
+                    'Error: destinationPath must be a directory'
+                )
+
 
     def run(self):
-        """Ejecuta el backup."""
+        """Create the backup."""
+        self.checkParams()
+
+        backupPath = Path(
+            self.params['destinationPath'].joinpath(
+                self.params['sourcePath'].name +
+                '.'+time.strftime("%Y%m%d")+'.tgz'
+            )
+        )
+
+        tar = tarfile.open(
+            str(backupPath),
+            'w:gz'
+        )
+        tar.add(
+            str(self.params['sourcePath']),
+            self.params['sourcePath'].name
+        )
+        tar.close()
+        # print(self.params['destinationPath'].with_name(self.params['sourcePath'].name))
+        # print(self.params['destinationPath'].cwd())
+        # destination = str(self.configs['destinationPath'])+
+        # if not self.params['sourcePath'].exists():
+        #    print("Existe")
+        # print(self.params['destinationPath'].basename())
+        # print(os.path.basename(str(self.params['sourcePath'])))
+        # tar = tarfile.open(
+        #    str(self.params['destinationPath'])+'.tgz',
+        #    'w:gz'
+        #)
+        # tar.add(self.configs['sourcePath'])
+        # tar.close()
 
 
 backup = Backup({
     'sourcePath': Path('/home/copeito/Projects'),
-    'destinationPath': '/media/local/data',
+    'destinationPath': '/media/local/data/',
     'maxNumber': 10,
     'minDaysBackup': 15
 })
+
+backup.run()
