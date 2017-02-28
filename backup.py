@@ -10,7 +10,6 @@ Tested in Python 3.5.
 from pathlib import Path
 import sys
 import tarfile
-import os
 import time
 
 
@@ -70,7 +69,6 @@ class Backup(object):
                     'Error: destinationPath must be a directory'
                 )
 
-
     def run(self):
         """Create the backup."""
         self.checkParams()
@@ -91,19 +89,6 @@ class Backup(object):
             self.params['sourcePath'].name
         )
         tar.close()
-        # print(self.params['destinationPath'].with_name(self.params['sourcePath'].name))
-        # print(self.params['destinationPath'].cwd())
-        # destination = str(self.configs['destinationPath'])+
-        # if not self.params['sourcePath'].exists():
-        #    print("Existe")
-        # print(self.params['destinationPath'].basename())
-        # print(os.path.basename(str(self.params['sourcePath'])))
-        # tar = tarfile.open(
-        #    str(self.params['destinationPath'])+'.tgz',
-        #    'w:gz'
-        #)
-        # tar.add(self.configs['sourcePath'])
-        # tar.close()
 
 
 backup = Backup({
