@@ -22,10 +22,29 @@ class Backup(object):
         if args is not None:
             self.set(args)
 
+        """Create nedded file structure"""
+        self.backups = self.createAppPath(
+            {
+                'Path': Path('tmp/backups.txt')
+            }
+        )
+
+    def createAppPath(self, args):
+        """Create path."""
+        if not args['Path'].exists():
+            try:
+                if not args['Path'].parent.exists():
+                    args['Path'].parent.mkdir()
+                args['Path'].touch(0o642, True)
+            except:
+                print('Path '+str(args['Path'])+' cannot be initialized.')
+
+        return args['Path']
+
     def set(self, args):
         """Manage how will be exetuted the backup."""
         paths = ['sourcePath', 'destinationPath']
-        integers = ['maxNumber', 'minDaysBackup']
+        integers = ['minSavedBackups', 'minDaysBackup']
 
         for arg in args:
             argType = type(args[arg])
@@ -69,14 +88,13 @@ class Backup(object):
                     'Error: destinationPath must be a directory'
                 )
 
-    def run(self):
-        """Create the backup."""
-        self.checkParams()
-
+    def create(self):
+        """Create new backup."""
+        """Append the name of the backup to the end of destinationPath"""
         backupPath = Path(
             self.params['destinationPath'].joinpath(
                 self.params['sourcePath'].name +
-                '.'+time.strftime("%Y%m%d")+'.tgz'
+                '.'+time.strftime("%Y%m%d.%H%M%S")+'.tgz'
             )
         )
 
@@ -90,11 +108,27 @@ class Backup(object):
         )
         tar.close()
 
+        if str(backupPath) not in self.backups.read_text().split("\n"):
+            self.backups.write_text(
+                self.backups.read_text()+str(backupPath)+"\n"
+            )
+
+    def delete(self):
+        """Delete old backups."""
+
+    def run(self):
+        """Check given parameters."""
+        self.checkParams()
+        """Create new backup"""
+        self.create()
+        """Delete old backups"""
+        self.delete()
+
 
 backup = Backup({
     'sourcePath': Path('/home/copeito/Projects'),
     'destinationPath': '/media/local/data/',
-    'maxNumber': 10,
+    'minSavedBackups': 10,
     'minDaysBackup': 15
 })
 
