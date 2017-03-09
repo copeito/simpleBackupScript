@@ -13,6 +13,14 @@ import tarfile
 import time
 
 
+class BackupList(object):
+    """Define file containing a list of existing backups."""
+
+    def __init__(self, args=None):
+        """Initialize a backup list."""
+        self.params = dict()
+
+
 class Backup(object):
     """Configure a backup."""
 
@@ -113,14 +121,33 @@ class Backup(object):
                 self.backups.read_text()+str(backupPath)+"\n"
             )
 
+    def purgeBackupList(self):
+        """Purge internal backup list."""
+        """Makes internal backup list fiable against deleting backup files
+        manually or by another software"""
+
+        tmp = ''
+        for backup in self.backups.read_text().strip().split("\n"):
+            if Path(backup).exists():
+                tmp += backup+"\n"
+
+        self.backups.write_text(tmp)
+
     def delete(self):
         """Delete old backups."""
+
+        backups = self.backups.read_text().strip().split("\n")
+
+        for backup in backups:
+            print(backup+'/'+str(Path(backup).stat().st_mtime))
 
     def run(self):
         """Check given parameters."""
         self.checkParams()
         """Create new backup"""
         self.create()
+        """Purge internal backup list"""
+        self.purgeBackupList()
         """Delete old backups"""
         self.delete()
 
