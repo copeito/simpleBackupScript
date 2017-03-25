@@ -11,6 +11,7 @@ from pathlib import Path
 import sys
 import tarfile
 import time
+import datetime
 
 
 class BackupList(object):
@@ -52,7 +53,7 @@ class Backup(object):
     def set(self, args):
         """Manage how will be exetuted the backup."""
         paths = ['sourcePath', 'destinationPath']
-        integers = ['minSavedBackups', 'minDaysBackup']
+        integers = ['minKeepBackups', 'minDaysBackup']
 
         for arg in args:
             argType = type(args[arg])
@@ -135,11 +136,31 @@ class Backup(object):
 
     def delete(self):
         """Delete old backups."""
+        outdatedList = []
+        deletedList = []
+        keep = 0
 
-        backups = self.backups.read_text().strip().split("\n")
+        for backup in self.backups.read_text().strip().split("\n"):
+            if (datetime.date.today() - datetime.datetime.fromtimestamp(
+                Path(backup).stat().st_mtime
+            ).date()).days > self.params['minDaysBackup']:
+                print("AddOutdated "+backup)
+                outdatedList.append(backup)
+            else:
+                keep += 1
 
-        for backup in backups:
-            print(backup+'/'+str(Path(backup).stat().st_mtime))
+        """Deletes same number of old backups as keep backups exceeds
+        minKeepBackups"""
+        if keep > self.params['minKeepBackups'] and outdatedList:
+            for i in range(keep - self.params['minKeepBackups']):
+                if i < len(outdatedList):
+                    print("deleting")
+                    if Path(outdatedList[i]).unlink():
+                        deletedList.append(outdatedList[i])
+
+        """Purge internal backup list"""
+        self.purgeBackupList()
+
 
     def run(self):
         """Check given parameters."""
@@ -155,7 +176,7 @@ class Backup(object):
 backup = Backup({
     'sourcePath': Path('/home/copeito/Projects'),
     'destinationPath': '/media/local/data/',
-    'minSavedBackups': 10,
+    'minKeepBackups': 10,
     'minDaysBackup': 15
 })
 
